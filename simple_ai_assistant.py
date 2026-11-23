@@ -9,6 +9,13 @@ client = OpenAI(
 )
 
 messages = []
+# giving personilty to the assistant
+messages.append(
+    {
+        "role" : "system",
+        "content" : "Act as a humble agent and always reply within 20 words"
+    }
+)
 print("To Exit -> Enter /bye")
 while True:
 
