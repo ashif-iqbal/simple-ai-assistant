@@ -43,7 +43,6 @@ TOOLS = [
         }
     }
 ]
-get_city_weather("tokyo")
 FUNCTION_NAME_TO_FUNCTION_MAP = {
     "get_current_time" : get_current_time,
     "get_city_weather" : get_city_weather

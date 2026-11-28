@@ -30,33 +30,31 @@ while True:
             "content" : user_input
         }
     )
-    response = client.chat.completions.create(
-
-        model = os.getenv("MODEL"),
-        messages = messages,
-        tools = TOOLS
-    )
-    msg = response.choices[0].message
-    if msg.tool_calls:
-        messages.append(msg)
-        for tool_call in msg.tool_calls:
-            func_name = tool_call.function.name
-            func_args = json.loads(tool_call.function.arguments or "{}")
-            fn = FUNCTION_NAME_TO_FUNCTION_MAP.get(func_name)
-            result = fn(**func_args)
-            messages.append(
-                {
-                    "role" : "tool",
-                    "tool_id" : tool_call.id,
-                    "content" : str(result)
-                }
+    while True:
+        response = client.chat.completions.create(
+        
+                model = os.getenv("MODEL"),
+                messages = messages,
+                tools = TOOLS
             )
-    # again calling the LLM
-    response = client.chat.completions.create(
-        model = os.getenv("MODEL"),
-        messages = messages
+        msg = response.choices[0].message
+        if not msg.tool_calls:
+            break
 
-    )
+        if msg.tool_calls:
+            messages.append(msg)
+            for tool_call in msg.tool_calls:
+                func_name = tool_call.function.name
+                func_args = json.loads(tool_call.function.arguments or "{}")
+                fn = FUNCTION_NAME_TO_FUNCTION_MAP.get(func_name)
+                result = fn(**func_args)
+                messages.append(
+                    {
+                        "role" : "tool",
+                        "tool_id" : tool_call.id,
+                        "content" : str(result)
+                    }
+                )
     messages.append(
 
         {
