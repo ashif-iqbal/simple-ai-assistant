@@ -10,6 +10,8 @@ client = OpenAI(
 )
 
 messages = []
+MAX_STEPS = 5
+
 # giving personilty to the assistant
 messages.append(
     {
@@ -30,7 +32,8 @@ while True:
             "content" : user_input
         }
     )
-    while True:
+    step = 0
+    for step in range(MAX_STEPS):
         response = client.chat.completions.create(
         
                 model = os.getenv("MODEL"),
@@ -45,9 +48,14 @@ while True:
             messages.append(msg)
             for tool_call in msg.tool_calls:
                 func_name = tool_call.function.name
-                func_args = json.loads(tool_call.function.arguments or "{}")
-                fn = FUNCTION_NAME_TO_FUNCTION_MAP.get(func_name)
-                result = fn(**func_args)
+                func_args = {}
+                # handling errors while tool calling
+                try:
+                    func_args = json.loads(tool_call.function.arguments or "{}")
+                    fn = FUNCTION_NAME_TO_FUNCTION_MAP.get(func_name)
+                    result = fn(**func_args)
+                except Exception as e:
+                    result = f"Error while running {func_name} : {e}"
                 messages.append(
                     {
                         "role" : "tool",
@@ -55,6 +63,18 @@ while True:
                         "content" : str(result)
                     }
                 )
+    else:
+        # we ran out of steps and the model did not gave a final answer
+        fallback = "Sorry, This could not be finished within the given step limit"
+        messages.append(
+            {
+                "role" : "assistant",
+                "content" : fallback
+            }
+        )
+        print("\nAssistant : " + fallback)
+        continue
+
     messages.append(
 
         {
